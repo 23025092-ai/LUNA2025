@@ -18,7 +18,7 @@ export default function Notebook(){
         </ul>
       </div>
       <div className="h-[75vh]">
-        <iframe title="JupyterLite" src={src} className="w-full h-full border rounded" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe>
+        {/* <iframe title="JupyterLite" src={src} className="w-full h-full border rounded" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe> */}
       </div>
     </div>
   )

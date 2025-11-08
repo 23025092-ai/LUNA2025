@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
 import './index.css'
 import LoginPage from './pages/LoginPage.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -39,43 +39,61 @@ function AppShell() {
   if (!token) return <Navigate to="/login" />
   const pageTitle = usePageTitle()
 
+  // local UI state for the topbar
+  const [q, setQ] = React.useState('')
+
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-slate-50">
       <aside className="w-64 bg-slate-800 text-white p-4 space-y-3">
         <div className="text-xl font-semibold flex items-center gap-2">
           <span>🌙</span>LUNA25
         </div>
         <nav className="flex flex-col space-y-2">
-          <Link to="/" className="hover:underline">🏠 Dashboard</Link>
-          <Link to="/datasets" className="hover:underline">📚 Datasets</Link>
-          <Link to="/submissions" className="hover:underline">📤 Submissions</Link>
-          <Link to="/leaderboard" className="hover:underline">🏆 Leaderboard</Link>
-          <Link to="/apitest" className="hover:underline">🧪 API Test</Link>
-          <Link to="/notebook" className="hover:underline">📔 Notebook</Link>
+          <NavLink to="/" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>🏠 Dashboard</NavLink>
+          <NavLink to="/datasets" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>📚 Datasets</NavLink>
+          <NavLink to="/submissions" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>📤 Submissions</NavLink>
+          <NavLink to="/leaderboard" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>🏆 Leaderboard</NavLink>
+          <NavLink to="/apitest" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>🧪 API Test</NavLink>
+          <NavLink to="/notebook" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>📔 Notebook</NavLink>
         </nav>
-        <div className="pt-10 text-sm opacity-80">
-          {user ? <>User: <b>{user.username}</b> <span className="ml-1 border rounded px-2 bg-slate-600">{user.role}</span></> : null}
+        <div className="pt-6 text-sm opacity-90">
+          {user ? (
+            <div className="flex flex-col gap-2">
+              <div className="text-sm">{user.full_name || user.username}</div>
+              <div className="text-xs"><span className="badge">{user.role}</span> <span className="muted ml-2">{user.group_name}</span></div>
+            </div>
+          ) : null}
         </div>
-        <button className="btn mt-4" onClick={logout}>Logout</button>
+        <button className="btn mt-4 w-full" onClick={logout}>Logout</button>
       </aside>
-      <main className="flex-1 p-6 space-y-6">
-        <div className="mb-4 text-xl font-bold flex items-center gap-2 text-slate-700">
-          <span className="opacity-70">{pageTitle}</span>
-        </div>
-        <Routes>
-          <Route path="/" element={<Dashboard/>} />
-          <Route path="/datasets" element={<Datasets/>} />
-          <Route path="/submissions" element={<Submissions/>} />
-          <Route path="/submissions/:id" element={<SubmissionDetail/>} />
-          <Route path="/leaderboard" element={<Leaderboard/>} />
-          <Route path="/apitest" element={
-            <RoleRoute roles={["admin"]}>
-              <ApiTest/>
-            </RoleRoute>
-          } />
-          <Route path="/notebook" element={<Notebook/>} />
-        </Routes>
-      </main>
+      <div className="flex-1 flex flex-col">
+        <header className="topbar">
+          <div className="flex items-center gap-4">
+            <div className="text-lg font-semibold text-slate-700">{pageTitle || 'LUNA25'}</div>
+            <div>
+              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search datasets, submissions..." className="input w-72" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-sm muted">{user?.username}</div>
+          </div>
+        </header>
+        <main className="flex-1 p-6 space-y-6">
+          <Routes>
+            <Route path="/" element={<Dashboard/>} />
+            <Route path="/datasets" element={<Datasets/>} />
+            <Route path="/submissions" element={<Submissions/>} />
+            <Route path="/submissions/:id" element={<SubmissionDetail/>} />
+            <Route path="/leaderboard" element={<Leaderboard/>} />
+            <Route path="/apitest" element={
+              <RoleRoute roles={["admin"]}>
+                <ApiTest/>
+              </RoleRoute>
+            } />
+            <Route path="/notebook" element={<Notebook/>} />
+          </Routes>
+        </main>
+      </div>
     </div>
   )
 }

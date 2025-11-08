@@ -22,7 +22,10 @@ export default function LoginPage(){
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100">
       <form onSubmit={onSubmit} className="card w-full max-w-sm space-y-4">
-        <div className="text-2xl font-semibold">Login</div>
+        <div>
+          <div className="text-2xl font-semibold">Login</div>
+          <div className="text-sm muted">Sign in to access LUNA25 evaluation tools</div>
+        </div>
         {err && <div className="text-red-600 text-sm">{err}</div>}
         <div>
           <div className="label">Username</div>
@@ -33,6 +36,7 @@ export default function LoginPage(){
           <input type="password" className="input" value={p} onChange={e=>setP(e.target.value)} />
         </div>
         <button className="btn w-full" type="submit">Sign in</button>
+        <div className="text-xs muted text-center">Need an account? Ask an administrator to create one.</div>
       </form>
     </div>
   )

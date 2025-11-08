@@ -7,3 +7,17 @@
 .input { @apply border rounded px-3 py-2 w-full; }
 .label { @apply text-sm text-slate-600; }
 .badge { @apply text-xs px-2 py-1 rounded bg-slate-100 border; }
+
+/* Header and sidebar helpers */
+.topbar { @apply bg-white border-b p-3 flex items-center justify-between; }
+.nav-link { @apply text-slate-300 hover:text-white block px-2 py-1 rounded; }
+.nav-link-active { @apply bg-slate-700 text-white; }
+
+/* Card hover and subtle transitions */
+.card:hover { @apply shadow-lg transform translate-y-0; }
+.muted { @apply text-slate-500; }
+
+/* Simple spinner */
+.spinner {
+	@apply inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin;
+}

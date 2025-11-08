@@ -7,6 +7,7 @@ export default function Datasets(){
   const [page, setPage] = useState(1)
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(false)
   const [name, setName] = useState('LUNA25 Test')
   const [desc, setDesc] = useState('')
   const [dataFile, setDataFile] = useState(null)
@@ -14,8 +15,13 @@ export default function Datasets(){
   const [msg, setMsg] = useState('')
 
   const load = async ()=> {
-    const r = await axios.get(`${API}/datasets/?page=${page}&page_size=20`)
-    setItems(r.data.items); setTotal(r.data.total)
+    try{
+      setLoading(true)
+      const r = await axios.get(`${API}/datasets/?page=${page}&page_size=20`)
+      setItems(r.data.items); setTotal(r.data.total)
+    } finally {
+      setLoading(false)
+    }
   }
   useEffect(()=>{ load() }, [page])
 
@@ -70,36 +76,41 @@ export default function Datasets(){
               <input type="file" required onChange={e=>setGtFile(e.target.files[0])} />
             </div>
           </div>
-          <button className="btn w-fit">Upload dataset</button>
+          <button className="btn w-fit" disabled={!gtFile}>Upload dataset</button>
           {msg && <div className="text-green-700 text-sm">{msg}</div>}
         </form>
       )}
-
       <div className="grid gap-3">
-        {items.map(d=> (
-          <div key={d.id} className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-semibold">{d.name} {d.is_official ? <span className="badge ml-2">Official</span> : null}</div>
-                <div className="text-sm opacity-80">{d.description}</div>
+        {loading ? (
+          <div className="card flex items-center gap-3"> <div className="spinner"/> <div>Loading datasets...</div> </div>
+        ) : items.length === 0 ? (
+          <div className="card text-center text-slate-600">No datasets found. Upload a dataset to get started.</div>
+        ) : (
+          items.map(d=> (
+            <div key={d.id} className="card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-semibold">{d.name} {d.is_official ? <span className="badge ml-2">Official</span> : null}</div>
+                  <div className="text-sm opacity-80">{d.description}</div>
+                </div>
+                {user?.role === 'admin' && (
+                  <div className="flex gap-2">
+                    <button className="btn" onClick={()=>analyze(d.id)}>Analyze</button>
+                    <button className="btn" onClick={()=>markOfficial(d.id)}>Mark official</button>
+                  </div>
+                )}
               </div>
-              {user?.role === 'admin' && (
-                <div className="flex gap-2">
-                  <button className="btn" onClick={()=>analyze(d.id)}>Analyze</button>
-                  <button className="btn" onClick={()=>markOfficial(d.id)}>Mark official</button>
+              {d.stats_json && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-sm">
+                  <div>Total: <b>{d.stats_json.total_rows || d.stats_json.total_samples || 0}</b></div>
+                  <div>Dup IDs: <b>{d.stats_json.duplicate_id ?? d.stats_json.duplicates ?? 0}</b></div>
+                  <div>Null label: <b>{d.stats_json.null_label ?? 0}</b></div>
+                  <div>Labels: <b>{Object.entries(d.stats_json.label_distribution || d.stats_json.class_distribution || {}).map(([k,v])=>`${k}:${(v*100).toFixed? (v*100).toFixed(1)+'%' : v}`).join(', ')}</b></div>
                 </div>
               )}
             </div>
-            {d.stats_json && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-sm">
-                <div>Total: <b>{d.stats_json.total_rows}</b></div>
-                <div>Dup IDs: <b>{d.stats_json.duplicate_id}</b></div>
-                <div>Null label: <b>{d.stats_json.null_label}</b></div>
-                <div>Labels: <b>{Object.entries(d.stats_json.label_distribution || {}).map(([k,v])=>`${k}:${v}`).join(', ')}</b></div>
-              </div>
-            )}
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       <div className="flex justify-end gap-2">
