@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
 import './index.css'
 import LoginPage from './pages/LoginPage.jsx'
+import RegisterPage from './pages/RegisterPage.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Datasets from './pages/Datasets.jsx'
 import Submissions from './pages/Submissions.jsx'
@@ -11,6 +12,7 @@ import Leaderboard from './pages/Leaderboard.jsx'
 import ApiTest from './pages/ApiTest.jsx'
 import Notebook from './pages/Notebook.jsx'
 import { useAuth, AuthProvider } from './state/auth.jsx'
+import Users from './pages/Users.jsx'
 
 function RoleRoute({roles, children}) {
   const { user } = useAuth()
@@ -24,11 +26,13 @@ function RoleRoute({roles, children}) {
 function usePageTitle() {
   const mapping = {
     "/": "Dashboard",
+    "/register": "Register",
     "/datasets": "Datasets",
     "/submissions": "Submissions",
     "/leaderboard": "Leaderboard",
     "/apitest": "API Test",
-    "/notebook": "Notebook"
+    "/notebook": "Notebook",
+    "/users": "Users"
   }
   const path = window.location.pathname.replace(/\/\d+$/,"");
   return mapping[path] || "";
@@ -55,6 +59,9 @@ function AppShell() {
           <NavLink to="/leaderboard" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>🏆 Leaderboard</NavLink>
           <NavLink to="/apitest" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>🧪 API Test</NavLink>
           <NavLink to="/notebook" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>📔 Notebook</NavLink>
+          {user ? (
+            <NavLink to="/users" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>👥 Users</NavLink>
+          ) : null}
         </nav>
         <div className="pt-6 text-sm opacity-90">
           {user ? (
@@ -91,6 +98,7 @@ function AppShell() {
               </RoleRoute>
             } />
             <Route path="/notebook" element={<Notebook/>} />
+            <Route path="/users" element={<Users />} />
           </Routes>
         </main>
       </div>
@@ -104,6 +112,7 @@ function Root() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage/>} />
+          <Route path="/register" element={<RegisterPage/>} />
           <Route path="/*" element={<AppShell/>} />
         </Routes>
       </BrowserRouter>

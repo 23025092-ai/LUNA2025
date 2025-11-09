@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '../state/auth.jsx'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 
 export default function LoginPage(){
   const { login, token } = useAuth()
@@ -36,7 +36,9 @@ export default function LoginPage(){
           <input type="password" className="input" value={p} onChange={e=>setP(e.target.value)} />
         </div>
         <button className="btn w-full" type="submit">Sign in</button>
-        <div className="text-xs muted text-center">Need an account? Ask an administrator to create one.</div>
+        <div className="mt-4 text-center text-sm">
+          Need an account? <Link to="/register" className="text-blue-600 hover:underline">Register</Link>
+        </div>
       </form>
     </div>
   )

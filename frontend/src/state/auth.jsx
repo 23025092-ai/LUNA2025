@@ -17,6 +17,12 @@ export function AuthProvider({children}) {
     }
   }, [token])
 
+  const register = async (username, password, extra = {}) => {
+    // send JSON matching backend UserCreate schema
+    const payload = { username, password, ...extra }
+    return axios.post(`${API}/auth/register`, payload)
+  }
+
   const login = async (username, password) => {
     const data = new URLSearchParams()
     data.append('username', username)
@@ -26,13 +32,14 @@ export function AuthProvider({children}) {
     localStorage.setItem('token', r.data.access_token)
   }
 
+
   const logout = () => {
     setToken(''); setUser(null); localStorage.removeItem('token')
   }
 
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {}
 
-  const value = { token, user, login, logout, API, authHeader }
+  const value = { token, user, register, login, logout, API, authHeader }
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>
 }
 
