@@ -1,0 +1,111 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: luna-backend-alerts
+  labels:
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+    - name: luna-backend
+      interval: 30s
+      rules:
+        # High error rate alert
+        - alert: HighAPIErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{status=~"5.."}[5m]))
+              /
+              sum(rate(http_requests_total[5m]))
+            ) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+            component: api
+          annotations:
+            summary: "High API error rate detected"
+            description: "API error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+        # Validation queue backlog alert
+        - alert: ValidationQueueBacklog
+          expr: validation_queue_length > 100
+          for: 10m
+          labels:
+            severity: warning
+            component: worker
+          annotations:
+            summary: "Validation queue backlog"
+            description: "Validation queue has {{ $value }} pending jobs for more than 10 minutes"
+
+        # High validation failure rate
+        - alert: HighValidationFailureRate
+          expr: |
+            (
+              sum(rate(validation_duration_seconds_count{status="failed"}[10m]))
+              /
+              sum(rate(validation_duration_seconds_count[10m]))
+            ) > 0.10
+          for: 15m
+          labels:
+            severity: warning
+            component: worker
+          annotations:
+            summary: "High validation failure rate"
+            description: "Validation failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+        # API latency alert
+        - alert: HighAPILatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket[5m])) by (le, endpoint)
+            ) > 2
+          for: 10m
+          labels:
+            severity: warning
+            component: api
+          annotations:
+            summary: "High API latency detected"
+            description: "95th percentile latency for {{ $labels.endpoint }} is {{ $value }}s (threshold: 2s)"
+
+        # Database connection issues
+        - alert: DatabaseConnectionFailure
+          expr: up{job="luna-backend-api"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            component: database
+          annotations:
+            summary: "Database connection failure"
+            description: "Cannot connect to database for more than 5 minutes"
+
+        # Worker down
+        - alert: WorkerDown
+          expr: up{job="luna-backend-worker"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            component: worker
+          annotations:
+            summary: "Celery worker is down"
+            description: "Worker has been down for more than 5 minutes"
+
+        # Node pressure (generic Kubernetes alert)
+        - alert: NodeMemoryPressure
+          expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+          for: 5m
+          labels:
+            severity: warning
+            component: infrastructure
+          annotations:
+            summary: "Node under memory pressure"
+            description: "Node {{ $labels.node }} is under memory pressure"
+
+        - alert: NodeDiskPressure
+          expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+          for: 5m
+          labels:
+            severity: warning
+            component: infrastructure
+          annotations:
+            summary: "Node under disk pressure"
+            description: "Node {{ $labels.node }} is under disk pressure"

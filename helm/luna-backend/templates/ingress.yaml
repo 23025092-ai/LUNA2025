@@ -1,0 +1,93 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "luna-backend.fullname" . }}
+  labels:
+    {{- include "luna-backend.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    konghq.com/plugins: {{ include "luna-backend.fullname" . }}-jwt-auth,{{ include "luna-backend.fullname" . }}-rate-limit,{{ include "luna-backend.fullname" . }}-cors
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "luna-backend.fullname" $ }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}
+---
+{{- if .Values.ingress.enabled }}
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: {{ include "luna-backend.fullname" . }}-jwt-auth
+  labels:
+    {{- include "luna-backend.labels" . | nindent 4 }}
+spec:
+  plugin: jwt
+  config:
+    key_claim_name: iss
+    secret_is_base64: false
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: {{ include "luna-backend.fullname" . }}-rate-limit
+  labels:
+    {{- include "luna-backend.labels" . | nindent 4 }}
+spec:
+  plugin: rate-limiting
+  config:
+    minute: 100
+    hour: 5000
+    policy: local
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: {{ include "luna-backend.fullname" . }}-cors
+  labels:
+    {{- include "luna-backend.labels" . | nindent 4 }}
+spec:
+  plugin: cors
+  config:
+    origins:
+      - "*"
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    headers:
+      - Accept
+      - Authorization
+      - Content-Type
+    exposed_headers:
+      - X-Auth-Token
+    credentials: true
+    max_age: 3600
+{{- end }}

@@ -16,3 +16,31 @@
 **/*.pyo
 **/*.pyd
 **/*.swp
+
+# Testing and coverage
+.coverage
+htmlcov/
+.pytest_cache/
+*.cover
+.hypothesis/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite3
+
+# Build artifacts
+*.egg-info/
+dist/
+build/

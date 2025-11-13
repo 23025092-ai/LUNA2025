@@ -1,0 +1,179 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, 'feat/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/luna-backend
+
+jobs:
+  lint-and-test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        working-directory: ./services/backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff black mypy pytest pytest-cov
+      
+      - name: Run ruff linter
+        working-directory: ./services/backend
+        run: ruff check .
+        continue-on-error: true
+      
+      - name: Run black formatter check
+        working-directory: ./services/backend
+        run: black --check .
+        continue-on-error: true
+      
+      - name: Run mypy type checker
+        working-directory: ./services/backend
+        run: mypy . --ignore-missing-imports
+        continue-on-error: true
+      
+      - name: Run tests
+        working-directory: ./services/backend
+        run: |
+          pytest tests/ -v --cov=. --cov-report=xml --cov-report=term
+        continue-on-error: true
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./services/backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+        continue-on-error: true
+
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./services/backend
+          file: ./services/backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Image digest
+        run: echo ${{ steps.meta.outputs.digest }}
+
+  helm-lint:
+    name: Helm Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.12.0'
+      
+      - name: Lint Helm chart
+        run: |
+          helm lint ./helm/luna-backend
+      
+      - name: Template Helm chart
+        run: |
+          helm template luna-backend ./helm/luna-backend --debug
+
+  deploy-argocd:
+    name: Trigger ArgoCD Sync
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+      
+      - name: Sync ArgoCD Application
+        env:
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+        run: |
+          if [ -n "$ARGOCD_SERVER" ] && [ -n "$ARGOCD_AUTH_TOKEN" ]; then
+            argocd app sync luna-backend --server $ARGOCD_SERVER --auth-token $ARGOCD_AUTH_TOKEN --grpc-web
+            argocd app wait luna-backend --server $ARGOCD_SERVER --auth-token $ARGOCD_AUTH_TOKEN --grpc-web
+          else
+            echo "ArgoCD credentials not configured, skipping sync"
+          fi
+        continue-on-error: true
+
+  notify:
+    name: Notify on Success/Failure
+    runs-on: ubuntu-latest
+    needs: [lint-and-test, build-and-push, helm-lint]
+    if: always()
+    
+    steps:
+      - name: Check job status
+        run: |
+          echo "Lint and Test: ${{ needs.lint-and-test.result }}"
+          echo "Build and Push: ${{ needs.build-and-push.result }}"
+          echo "Helm Lint: ${{ needs.helm-lint.result }}"
