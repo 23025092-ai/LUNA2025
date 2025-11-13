@@ -10,3 +10,9 @@
 */.env.test
 */.env.production
 */.env.local
+
+**/*/__pycache__/*
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/*.swp

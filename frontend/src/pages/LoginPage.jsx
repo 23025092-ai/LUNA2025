@@ -20,24 +20,27 @@ export default function LoginPage(){
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100">
-      <form onSubmit={onSubmit} className="card w-full max-w-sm space-y-4">
-        <div>
-          <div className="text-2xl font-semibold">Login</div>
-          <div className="text-sm muted">Sign in to access LUNA25 evaluation tools</div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <form onSubmit={onSubmit} className="card w-full max-w-md space-y-5 shadow-soft-lg">
+        <div className="text-center mb-2">
+          <div className="text-4xl mb-3">🌙</div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-brand-500 to-brand-600 bg-clip-text text-transparent font-display">
+            LUNA25
+          </h1>
+          <p className="text-navy-600 mt-2">Sign in to access evaluation tools</p>
         </div>
-        {err && <div className="text-red-600 text-sm">{err}</div>}
+        {err && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{err}</div>}
         <div>
           <div className="label">Username</div>
-          <input className="input" value={u} onChange={e=>setU(e.target.value)} />
+          <input className="input" value={u} onChange={e=>setU(e.target.value)} autoComplete="username" />
         </div>
         <div>
           <div className="label">Password</div>
-          <input type="password" className="input" value={p} onChange={e=>setP(e.target.value)} />
+          <input type="password" className="input" value={p} onChange={e=>setP(e.target.value)} autoComplete="current-password" />
         </div>
-        <button className="btn w-full" type="submit">Sign in</button>
-        <div className="mt-4 text-center text-sm">
-          Need an account? <Link to="/register" className="text-blue-600 hover:underline">Register</Link>
+        <button className="btn w-full text-base py-3" type="submit">Sign in</button>
+        <div className="mt-4 text-center text-sm text-navy-600">
+          Need an account? <Link to="/register" className="text-brand-600 hover:text-brand-700 font-semibold">Register</Link>
         </div>
       </form>
     </div>

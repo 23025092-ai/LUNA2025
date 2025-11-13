@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useAuth } from '../state/auth.jsx'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 export default function Leaderboard(){
   const { API, token } = useAuth()
@@ -59,54 +59,108 @@ export default function Leaderboard(){
     return d ? (d.name ?? `Dataset ${d.id}`) : `Dataset ${id}`
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="text-2xl font-semibold">Leaderboard (submissions)</div>
+  // Get medal emoji for top 3
+  const getMedal = (rank) => {
+    if (rank === 1) return '🥇'
+    if (rank === 2) return '🥈'
+    if (rank === 3) return '🥉'
+    return rank
+  }
 
-      <div className="flex gap-3 items-center">
-        <div className="label">Dataset</div>
-        <select className="input w-60" value={datasetId} onChange={e=>setDatasetId(e.target.value)}>
-          <option value="">All</option>
-          {datasets.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
-        </select>
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-brand-500 to-brand-600 bg-clip-text text-transparent">
+            Leaderboard
+          </h1>
+          <p className="text-navy-600 mt-2">Track team performance and rankings</p>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="flex gap-4 items-center flex-wrap">
+          <div>
+            <div className="label">Filter by Dataset</div>
+            <select className="input w-64" value={datasetId} onChange={e=>setDatasetId(e.target.value)}>
+              <option value="">All Datasets</option>
+              {datasets.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <div className="label">Sort by Metric</div>
+            <select className="input w-48" value={metric} onChange={e=>setMetric(e.target.value)}>
+              <option value="AUC">AUC</option>
+              <option value="F1">F1 Score</option>
+              <option value="PRECISION">Precision</option>
+              <option value="ACC">Accuracy</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className="card overflow-x-auto">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full">
           <thead>
-            <tr className="text-left border-b">
-              <th className="p-2">#</th>
-              <th className="p-2">Group</th>
-              <th className="p-2">Uploader</th>
-              <th className="p-2">Dataset</th>
-
-              {/* clickable metric headers: click to sort by that metric */}
-              <th className={`p-2 cursor-pointer ${metric==='AUC' ? 'font-semibold' : ''}`} onClick={()=>setMetric('AUC')}>AUC</th>
-              <th className={`p-2 cursor-pointer ${metric==='F1' ? 'font-semibold' : ''}`} onClick={()=>setMetric('F1')}>F1</th>
-              <th className={`p-2 cursor-pointer ${metric==='PRECISION' ? 'font-semibold' : ''}`} onClick={()=>setMetric('PRECISION')}>PRECISION</th>
-              <th className={`p-2 cursor-pointer ${metric==='ACC' ? 'font-semibold' : ''}`} onClick={()=>setMetric('ACC')}>ACC</th>
-
-              <th className="p-2">Sparkline</th>
+            <tr>
+              <th className="text-center w-16">Rank</th>
+              <th>Team/Group</th>
+              <th>Uploader</th>
+              <th>Dataset</th>
+              <th className={`cursor-pointer ${metric==='AUC' ? 'text-brand-600' : ''}`} onClick={()=>setMetric('AUC')}>
+                AUC {metric==='AUC' && '↓'}
+              </th>
+              <th className={`cursor-pointer ${metric==='F1' ? 'text-brand-600' : ''}`} onClick={()=>setMetric('F1')}>
+                F1 {metric==='F1' && '↓'}
+              </th>
+              <th className={`cursor-pointer ${metric==='PRECISION' ? 'text-brand-600' : ''}`} onClick={()=>setMetric('PRECISION')}>
+                Precision {metric==='PRECISION' && '↓'}
+              </th>
+              <th className={`cursor-pointer ${metric==='ACC' ? 'text-brand-600' : ''}`} onClick={()=>setMetric('ACC')}>
+                Accuracy {metric==='ACC' && '↓'}
+              </th>
+              <th className="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {items.map((x, i)=> (
-              <tr key={x.submission_id || i} className="border-b">
-                <td className="p-2">{i+1}</td>
-                <td className="p-2">{x.group_name}</td>
-                <td className="p-2">{x.gr ?? x.uploader_username ?? x.uploader_id ?? '-'}</td>
-                <td className="p-2">{getDatasetName(x.dataset_id)}</td>
-                <td className="p-2">{(x.auc!=null) ? x.auc.toFixed?.(4) ?? x.auc : '-'}</td>
-                <td className="p-2">{(x.f1!=null) ? x.f1.toFixed?.(4) ?? x.f1 : '-'}</td>
-                <td className="p-2">{(x.precision!=null) ? x.precision.toFixed?.(4) ?? x.precision : '-'}</td>
-                <td className="p-2">{(x.acc!=null) ? x.acc.toFixed?.(4) ?? x.acc : '-'}</td>
-                <td className="p-2">
-                  <button className="btn" onClick={()=>loadHistory(x.group_name, x.dataset_id)}>View</button>
+              <tr key={x.submission_id || i} className={i < 3 ? 'bg-brand-50/30' : ''}>
+                <td className="text-center font-bold text-lg">
+                  {typeof getMedal(i+1) === 'string' ? getMedal(i+1) : (
+                    <span className="text-navy-700">{i+1}</span>
+                  )}
+                </td>
+                <td className="font-semibold text-navy-700">{x.group_name}</td>
+                <td className="text-navy-600">{x.gr ?? x.uploader_username ?? x.uploader_id ?? '-'}</td>
+                <td className="text-navy-600">{getDatasetName(x.dataset_id)}</td>
+                <td className={metric==='AUC' ? 'font-bold text-brand-600' : ''}>
+                  {(x.auc!=null) ? x.auc.toFixed?.(4) ?? x.auc : '-'}
+                </td>
+                <td className={metric==='F1' ? 'font-bold text-brand-600' : ''}>
+                  {(x.f1!=null) ? x.f1.toFixed?.(4) ?? x.f1 : '-'}
+                </td>
+                <td className={metric==='PRECISION' ? 'font-bold text-brand-600' : ''}>
+                  {(x.precision!=null) ? x.precision.toFixed?.(4) ?? x.precision : '-'}
+                </td>
+                <td className={metric==='ACC' ? 'font-bold text-brand-600' : ''}>
+                  {(x.acc!=null) ? x.acc.toFixed?.(4) ?? x.acc : '-'}
+                </td>
+                <td className="text-center">
+                  <button 
+                    className="btn text-sm px-3 py-1.5" 
+                    onClick={()=>loadHistory(x.group_name, x.dataset_id)}
+                  >
+                    View History
+                  </button>
                 </td>
               </tr>
             ))}
             {items.length===0 && (
-              <tr><td className="p-4" colSpan={9}>No submissions found for the selected dataset/metric.</td></tr>
+              <tr>
+                <td className="p-8 text-center text-slate-500" colSpan={9}>
+                  No submissions found for the selected dataset/metric.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -114,14 +168,40 @@ export default function Leaderboard(){
 
       {history.length>0 && (
         <div className="card">
-          <div className="font-semibold mb-2">AUC over time — {selectedGroup}</div>
-          <div style={{width:'100%', height:200}}>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-navy-700">
+            <span className="text-2xl">📈</span>
+            AUC Performance Over Time — <span className="text-brand-600">{selectedGroup}</span>
+          </h2>
+          <div style={{width:'100%', height:300}}>
             <ResponsiveContainer>
               <LineChart data={history}>
-                <XAxis dataKey="i" />
-                <YAxis domain={['auto','auto']} />
-                <Tooltip />
-                <Line type="monotone" dataKey="auc" dot={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                <XAxis 
+                  dataKey="i" 
+                  label={{ value: 'Submission #', position: 'insideBottom', offset: -5 }}
+                  tick={{ fill: '#64748B', fontSize: 12 }}
+                />
+                <YAxis 
+                  domain={['auto','auto']} 
+                  tick={{ fill: '#64748B', fontSize: 12 }}
+                  label={{ value: 'AUC Score', angle: -90, position: 'insideLeft' }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#FFF', 
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="auc" 
+                  stroke="#4318FF" 
+                  strokeWidth={3}
+                  dot={{ fill: '#4318FF', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>

@@ -2,22 +2,124 @@
 @tailwind components;
 @tailwind utilities;
 
-.btn { @apply px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50; }
-.card { @apply bg-white rounded-lg shadow p-4; }
-.input { @apply border rounded px-3 py-2 w-full; }
-.label { @apply text-sm text-slate-600; }
-.badge { @apply text-xs px-2 py-1 rounded bg-slate-100 border; }
+/* Base Typography */
+@layer base {
+  body {
+    @apply font-sans text-base text-navy-700 antialiased;
+  }
+  
+  h1 { @apply text-3xl font-bold font-display; }
+  h2 { @apply text-2xl font-semibold font-display; }
+  h3 { @apply text-xl font-semibold font-display; }
+}
 
-/* Header and sidebar helpers */
-.topbar { @apply bg-white border-b p-3 flex items-center justify-between; }
-.nav-link { @apply text-slate-300 hover:text-white block px-2 py-1 rounded; }
-.nav-link-active { @apply bg-slate-700 text-white; }
+/* Modern Button Styles */
+.btn { 
+  @apply px-4 py-2.5 rounded-xl font-medium text-white transition-all duration-200;
+  @apply bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700;
+  @apply shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply transform hover:-translate-y-0.5 active:translate-y-0;
+}
 
-/* Card hover and subtle transitions */
-.card:hover { @apply shadow-lg transform translate-y-0; }
-.muted { @apply text-slate-500; }
+/* Modern Card Styles */
+.card { 
+  @apply bg-white rounded-2xl shadow-soft p-6 transition-all duration-300;
+  @apply border border-slate-100/50 hover:shadow-soft-lg;
+}
 
-/* Simple spinner */
+/* Modern Input Styles */
+.input { 
+  @apply border-2 border-slate-200 rounded-xl px-4 py-2.5 w-full;
+  @apply focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition-all duration-200;
+  @apply placeholder-slate-400 text-sm;
+}
+
+.label { @apply text-sm font-semibold text-navy-700 mb-2 block; }
+
+/* Modern Badge Styles */
+.badge { 
+  @apply text-xs px-3 py-1.5 rounded-full font-semibold;
+  @apply bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200 text-brand-700;
+}
+
+/* Fixed Sidebar */
+.sidebar-fixed {
+  @apply fixed left-0 top-0 h-screen overflow-y-auto;
+  @apply w-64 bg-gradient-to-b from-white via-slate-50 to-slate-100;
+  @apply border-r border-slate-200 shadow-soft-lg z-50;
+}
+
+/* Modern Header */
+.topbar { 
+  @apply bg-white/80 border-b border-slate-200 px-6 py-4 flex items-center justify-between;
+  @apply shadow-sm backdrop-blur-lg bg-white/95 sticky top-0 z-40;
+}
+
+.nav-link { 
+  @apply text-navy-600 hover:text-navy-900 block px-4 py-3 rounded-xl;
+  @apply transition-all duration-200 font-medium text-sm;
+  @apply hover:bg-slate-100 hover:translate-x-1;
+}
+
+.nav-link-active { 
+  @apply bg-gradient-to-r from-brand-500 to-brand-600 text-white;
+  @apply shadow-md shadow-brand-500/20;
+}
+
+/* Enhanced card hover effects */
+.card:hover { 
+  @apply shadow-soft-lg transform -translate-y-1; 
+}
+
+.muted { @apply text-slate-500 text-sm; }
+
+/* Modern spinner with gradient */
 .spinner {
-	@apply inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin;
+  @apply inline-block w-6 h-6 border-4 rounded-full animate-spin;
+  border-color: #4318FF;
+  border-top-color: transparent;
+  border-right-color: transparent;
+}
+
+/* Modern table styles */
+table th {
+  @apply bg-gradient-to-r from-slate-50 to-slate-100 font-semibold text-navy-700;
+  @apply px-4 py-3 text-left text-sm border-b-2 border-slate-200;
+}
+
+table td {
+  @apply px-4 py-3.5 border-b border-slate-100 text-sm;
+}
+
+table tbody tr {
+  @apply hover:bg-brand-50/30 transition-colors duration-150;
+}
+
+/* Checkbox modern style */
+.checkbox {
+  @apply w-5 h-5 rounded border-2 border-slate-300 text-brand-600;
+  @apply focus:ring-2 focus:ring-brand-500 focus:ring-offset-2;
+  @apply cursor-pointer transition-all duration-200;
+}
+
+/* File input modern style */
+input[type="file"] {
+  @apply block w-full text-sm text-slate-500;
+  @apply file:mr-4 file:py-2.5 file:px-4;
+  @apply file:rounded-xl file:border-0;
+  @apply file:text-sm file:font-semibold;
+  @apply file:bg-brand-50 file:text-brand-700;
+  @apply file:cursor-pointer file:transition-all file:duration-200;
+  @apply hover:file:bg-brand-100;
+}
+
+/* Stat card styles */
+.stat-card {
+  @apply card bg-gradient-to-br p-6 text-white border-0;
+  @apply transform hover:scale-105 transition-transform duration-300;
+}
+
+/* Content area margin for fixed sidebar */
+.main-content {
+  @apply ml-64 min-h-screen;
 }

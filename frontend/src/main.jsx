@@ -47,45 +47,96 @@ function AppShell() {
   const [q, setQ] = React.useState('')
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
-      <aside className="w-64 bg-slate-800 text-white p-4 space-y-3">
-        <div className="text-xl font-semibold flex items-center gap-2">
-          <span>🌙</span>LUNA25
+    <div className="min-h-screen bg-slate-50">
+      {/* Fixed Sidebar */}
+      <aside className="sidebar-fixed">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-200">
+            <span className="text-3xl">🌙</span>
+            <span className="text-2xl font-bold bg-gradient-to-r from-brand-500 to-brand-600 bg-clip-text text-transparent font-display">
+              LUNA25
+            </span>
+          </div>
+          <nav className="flex flex-col space-y-2">
+            <NavLink to="/" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>
+              <span className="text-lg mr-2">🏠</span> Dashboard
+            </NavLink>
+            <NavLink to="/datasets" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>
+              <span className="text-lg mr-2">📚</span> Datasets
+            </NavLink>
+            <NavLink to="/submissions" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>
+              <span className="text-lg mr-2">📤</span> Submissions
+            </NavLink>
+            <NavLink to="/leaderboard" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>
+              <span className="text-lg mr-2">🏆</span> Leaderboard
+            </NavLink>
+            <NavLink to="/apitest" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>
+              <span className="text-lg mr-2">🧪</span> API Test
+            </NavLink>
+            <NavLink to="/notebook" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>
+              <span className="text-lg mr-2">📔</span> Notebook
+            </NavLink>
+            {user ? (
+              <NavLink to="/users" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>
+                <span className="text-lg mr-2">👥</span> Users
+              </NavLink>
+            ) : null}
+          </nav>
         </div>
-        <nav className="flex flex-col space-y-2">
-          <NavLink to="/" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>🏠 Dashboard</NavLink>
-          <NavLink to="/datasets" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>📚 Datasets</NavLink>
-          <NavLink to="/submissions" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>📤 Submissions</NavLink>
-          <NavLink to="/leaderboard" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>🏆 Leaderboard</NavLink>
-          <NavLink to="/apitest" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>🧪 API Test</NavLink>
-          <NavLink to="/notebook" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>📔 Notebook</NavLink>
+        
+        {/* User info at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-slate-200 bg-white">
           {user ? (
-            <NavLink to="/users" className={({isActive})=> isActive ? 'nav-link nav-link-active' : 'nav-link'}>👥 Users</NavLink>
-          ) : null}
-        </nav>
-        <div className="pt-6 text-sm opacity-90">
-          {user ? (
-            <div className="flex flex-col gap-2">
-              <div className="text-sm">{user.full_name || user.username}</div>
-              <div className="text-xs"><span className="badge">{user.role}</span> <span className="muted ml-2">{user.group_name}</span></div>
+            <div className="flex flex-col gap-3 p-3 bg-slate-50 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 flex items-center justify-center text-white font-semibold">
+                  {user?.username?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-navy-700 truncate">{user.full_name || user.username}</div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="badge text-xs">{user.role}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : null}
+          <button 
+            className="btn mt-3 w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700" 
+            onClick={logout}
+          >
+            <span className="mr-2">🚪</span> Logout
+          </button>
         </div>
-        <button className="btn mt-4 w-full" onClick={logout}>Logout</button>
       </aside>
-      <div className="flex-1 flex flex-col">
+      
+      {/* Main Content Area */}
+      <div className="main-content">
         <header className="topbar">
           <div className="flex items-center gap-4">
-            <div className="text-lg font-semibold text-slate-700">{pageTitle || 'LUNA25'}</div>
-            <div>
-              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search datasets, submissions..." className="input w-72" />
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-brand-500 to-brand-600 bg-clip-text text-transparent font-display">
+              {pageTitle || 'LUNA25'}
+            </h1>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">🔍</span>
+              <input 
+                value={q} 
+                onChange={e=>setQ(e.target.value)} 
+                placeholder="Search datasets, submissions..." 
+                className="input w-80 pl-10 bg-slate-50/50 border-slate-200" 
+              />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-sm muted">{user?.username}</div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-brand-50 to-indigo-50 rounded-xl border border-brand-200">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 flex items-center justify-center text-white font-semibold text-sm">
+                {user?.username?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <div className="text-sm font-medium text-navy-700">{user?.username}</div>
+            </div>
           </div>
         </header>
-        <main className="flex-1 p-6 space-y-6">
+        <main className="p-8 space-y-6">
           <Routes>
             <Route path="/" element={<Dashboard/>} />
             <Route path="/datasets" element={<Datasets/>} />
