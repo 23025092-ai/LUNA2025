@@ -1,0 +1,203 @@
+# Default values for luna-backend
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount:
+  api: 2
+  worker: 3
+
+image:
+  repository: ghcr.io/23025092-ai/luna-backend
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+  annotations: {}
+
+ingress:
+  enabled: true
+  className: "kong"
+  annotations:
+    konghq.com/strip-path: "true"
+    konghq.com/protocols: "https"
+  hosts:
+    - host: api.luna2025.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: luna-backend-tls
+      hosts:
+        - api.luna2025.local
+
+resources:
+  api:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  worker:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Database configuration
+postgresql:
+  enabled: true
+  auth:
+    username: luna
+    password: luna
+    database: luna25
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+  # For external PostgreSQL
+  external:
+    enabled: false
+    host: ""
+    port: 5432
+    username: ""
+    password: ""
+    database: ""
+
+# Redis configuration
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+  # For external Redis
+  external:
+    enabled: false
+    host: ""
+    port: 6379
+    password: ""
+
+# RabbitMQ configuration
+rabbitmq:
+  enabled: true
+  auth:
+    username: guest
+    password: guest
+  persistence:
+    enabled: true
+    size: 5Gi
+  # For external RabbitMQ
+  external:
+    enabled: false
+    host: ""
+    port: 5672
+    username: ""
+    password: ""
+
+# MinIO configuration
+minio:
+  enabled: true
+  auth:
+    rootUser: minioadmin
+    rootPassword: minioadmin
+  defaultBuckets: "luna-datasets"
+  persistence:
+    enabled: true
+    size: 50Gi
+  # For external MinIO/S3
+  external:
+    enabled: false
+    endpoint: ""
+    accessKey: ""
+    secretKey: ""
+    bucket: ""
+    region: "us-east-1"
+    useSSL: false
+
+# Application configuration
+app:
+  env:
+    LOG_LEVEL: "INFO"
+    CORS_ORIGINS: "*"
+    JWT_SECRET_KEY: "change-me-in-production"
+  
+  # Celery worker configuration
+  celery:
+    concurrency: 4
+    maxTasksPerChild: 1000
+    logLevel: "INFO"
+
+# Monitoring
+prometheus:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+
+# Network Policy
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+# Migration job
+migration:
+  enabled: true
+  image:
+    repository: ghcr.io/23025092-ai/luna-backend
+    tag: "latest"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi

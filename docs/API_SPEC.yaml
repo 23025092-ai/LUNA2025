@@ -1,0 +1,232 @@
+openapi: 3.0.0
+info:
+  title: LUNA2025 Backend API
+  description: API for X-ray dataset upload and validation
+  version: 1.0.0
+  contact:
+    name: LUNA2025 Team
+    email: team@luna2025.com
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development
+  - url: https://api.luna2025.com/api/v1
+    description: Production
+
+paths:
+  /auth/login:
+    post:
+      summary: Login and get JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+
+  /upload/start:
+    post:
+      summary: Start dataset upload
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataset_name:
+                  type: string
+                description:
+                  type: string
+                files:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      filename:
+                        type: string
+                      content_type:
+                        type: string
+                      size_bytes:
+                        type: integer
+                team_id:
+                  type: integer
+              required:
+                - dataset_name
+                - files
+                - team_id
+      responses:
+        '200':
+          description: Upload URLs generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dataset_id:
+                    type: integer
+                  upload_urls:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        file_id:
+                          type: integer
+                        filename:
+                          type: string
+                        upload_url:
+                          type: string
+                        s3_key:
+                          type: string
+                        method:
+                          type: string
+                        headers:
+                          type: object
+                  expires_in:
+                    type: integer
+
+  /upload/complete:
+    post:
+      summary: Mark upload complete and trigger validation
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataset_id:
+                  type: integer
+              required:
+                - dataset_id
+      responses:
+        '200':
+          description: Upload marked complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dataset_id:
+                    type: integer
+                  validation_job_id:
+                    type: integer
+                  status:
+                    type: string
+                  message:
+                    type: string
+
+  /validation/{dataset_id}/status:
+    get:
+      summary: Get validation status
+      tags:
+        - Validation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: dataset_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Validation status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dataset_id:
+                    type: integer
+                  validation_job_id:
+                    type: integer
+                  status:
+                    type: string
+                    enum: [pending, processing, completed, failed]
+                  started_at:
+                    type: string
+                    format: date-time
+                  completed_at:
+                    type: string
+                    format: date-time
+                  error_message:
+                    type: string
+                  validation_logs:
+                    type: array
+                    items:
+                      type: object
+                  validation_results:
+                    type: object
+
+  /health:
+    get:
+      summary: Health check
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  database:
+                    type: string
+                  s3:
+                    type: string
+                  version:
+                    type: string
+
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Prometheus metrics in text format
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

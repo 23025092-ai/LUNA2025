@@ -1,0 +1,14 @@
+apiVersion: v2
+name: luna-backend
+description: Helm chart for LUNA2025 backend services
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - luna2025
+  - backend
+  - xray
+  - validation
+maintainers:
+  - name: LUNA2025 Team
+    email: team@luna2025.com
